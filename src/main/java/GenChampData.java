@@ -1,8 +1,9 @@
+import org.codehaus.jackson.map.ObjectMapper;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -26,10 +27,11 @@ public class GenChampData {
     private static final String FBREF_URL = "https://fbref.com/";
     private static final String SQUAD_TABLE_ID = "stats_standard_ks_3233";
     private static final String PLAYER_SEASONS_ID = "stats_standard_ks_dom_lg";
+    private static final String MISC_TABLE_ID = "stats_misc_ks_dom_lg";
 
     // Regex used to extract information from the player.
-    private static final String POSITION_REGEX = "Position: *([A-Z][A-Z] \\([A-Z][A-Z]\\))";
-    private static final String AGE_REGEX = "Age: (\\d\\d)";
+    private static final String POSITION_REGEX = "Position: *([A-Z]+)";
+
 
     /**
      * Gets the links to each team in the championship.
@@ -78,7 +80,7 @@ public class GenChampData {
      * supplied.
      * @param url of the profile of the player.
      */
-    public static void genPlayer(String url) throws Exception {
+    public static Player genPlayer(String url, String club) throws Exception {
         url = FBREF_URL + url;
         Document doc = Jsoup.connect(url).userAgent("Mozilla").get();
 
@@ -99,18 +101,37 @@ public class GenChampData {
         if (m.find())
             posString = m.group(1);
         else
-            throw new Exception("the web page is not in the correct format");
+            throw new Exception(name + " - the web page is not in the correct format");
 
-        // Get the age of the player.
-        Elements age = playerInfo.select("p:contains(Age:)");
+        // Get the DoB of the player
+        String dOB = playerInfo.getElementById("necro-birth").text();
 
+        // Get the link to the player profile picture.
+        String imageURL = playerInfo.select("div.media-item > img").attr("src");
+
+        if (imageURL.equals(""))
+            throw new Exception("no image linked with the player");
+
+        if (doc.select("strong:contains(Dom Lg)") == null)
+            throw new NoDomesticLeagueException("this player has no starts in the domestic league");
+
+        // Get MP, Min, Gls, Ast
+        String matchesPlayed = doc.select("h4[data-tip~=Matches Played by the player .*] ~ p").get(0).text();
+        String minsPlayed = doc.select("h4[data-tip=Minutes] ~ p").get(0).text();
+        String goalsScored = doc.select("h4[data-tip=Goals scored or allowed] ~ p").get(0).text();
+        String assists = doc.select("h4[data-tip=Assists] ~ p").get(0).text();
 
 
         // Get the standard stats table.
-        Elements seasons = doc.getElementById(PLAYER_SEASONS_ID).select("tbody").select("tr");
+        Elements seasonsStandard = doc.getElementById(PLAYER_SEASONS_ID).select("tbody").select("tr");
 
-        // Get the most recent season.
-        System.out.println(seasons.get(seasons.size() - 1));
+        // Get the most recent season the player has played in
+        Element recentSeason = seasonsStandard.get(seasonsStandard.size() - 1);
+        String yellowCards = recentSeason.select("td[data-stat=cards_yellow]").text();
+        String redCards = recentSeason.select("td[data-stat=cards_red]").text();
+
+        return new Player(name, club, dOB, posString, Integer.parseInt(goalsScored), Integer.parseInt(assists), Integer.parseInt(yellowCards),
+                Integer.parseInt(redCards), Integer.parseInt(minsPlayed), Integer.parseInt(matchesPlayed), imageURL);
 
     }
 
@@ -119,18 +140,34 @@ public class GenChampData {
     /**
      * @param args command line arguments
      */
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         getTeams();
 
-        // Get the keys in the HashMap.
         Set<String> squadKeys = teams.keySet();
 
-        /*
         for (String team : squadKeys) {
             getSquad(teams.get(team), team);
-        }*/
+        }
 
-        genPlayer("/en/players/35e413f1/Ben-White");
+        List<Player> players = new ArrayList<>();
+        squadKeys = squads.keySet();
+        for (String squad : squadKeys) {
+            // Get a list of the player urls in the current squad.
+            List<String> playerURLs = squads.get(squad);
 
+            for (String playerURL : playerURLs) {
+                try {
+                    Player player = genPlayer(playerURL, squad);
+                    System.out.println(player);
+                    players.add(player);
+
+                } catch (Exception e) {
+                }
+            }
+        }
+
+        Players playersObj = new Players(players);
+        ObjectMapper playersMapper = new ObjectMapper();
+        playersMapper.writerWithDefaultPrettyPrinter().writeValue(new FileWriter("players.json"), playersObj);
     }
 }

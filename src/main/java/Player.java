@@ -2,13 +2,12 @@ public class Player {
 
     private String name;
     private String team;
-    private int age;
+    private String dOB;
     private String position;
     private int goals;
     private int assists;
     private int yellowCards;
     private int redCards;
-    private int tackles;
     private int minsPlayed;
     private int starts;
     private String imageURL;
@@ -17,29 +16,27 @@ public class Player {
      * Represents a Player from the WhoScored website.
      * @param name of the player
      * @param team the player is a part of
-     * @param age of the player
+     * @param dOB of the player
      * @param position the player plays in
      * @param goals the number of goals the player has
      * @param assists the number of assists the player has
      * @param yellowCards the number of yellow cards the player has
      * @param redCards the number of red cards the player has
-     * @param tackles the number of tackles the player averages in a game
      * @param minsPlayed the number of minutes played the player has played this season
      * @param starts total number of starts the player has in the current season
      * @param imageURL location of the players image icon on the internet
      */
-    public Player(String name, String team, int age, String position, int goals,
-                  int assists, int yellowCards, int redCards, int tackles, int minsPlayed, int starts,
+    public Player(String name, String team, String dOB, String position, int goals,
+                  int assists, int yellowCards, int redCards, int minsPlayed, int starts,
                   String imageURL) {
         this.name = name;
         this.team = team;
-        this.age = age;
+        this.dOB = dOB;
         this.position = position;
         this.goals = goals;
         this.assists = assists;
         this.yellowCards = yellowCards;
         this.redCards = redCards;
-        this.tackles = tackles;
         this.minsPlayed = minsPlayed;
         this.starts = starts;
         this.imageURL = imageURL;
@@ -69,12 +66,12 @@ public class Player {
         this.team = team;
     }
 
-    public int getAge() {
-        return age;
+    public String getDOB() {
+        return dOB;
     }
 
-    public void setAge(int age) {
-        this.age = age;
+    public void setDOB(String dOB) {
+        this.dOB = dOB;
     }
 
     public String getPosition() {
@@ -125,14 +122,6 @@ public class Player {
         this.redCards = redCards;
     }
 
-    public int getTackles() {
-        return tackles;
-    }
-
-    public void setTackles(int tackles) {
-        this.tackles = tackles;
-    }
-
     public int getMinsPlayed() {
         return minsPlayed;
     }
@@ -146,15 +135,15 @@ public class Player {
         return "Player{" +
                 "name='" + name + '\'' +
                 ", team='" + team + '\'' +
-                ", age=" + age +
+                ", dOB='" + dOB + '\'' +
                 ", position='" + position + '\'' +
                 ", goals=" + goals +
                 ", assists=" + assists +
                 ", yellowCards=" + yellowCards +
                 ", redCards=" + redCards +
-                ", tackles=" + tackles +
                 ", minsPlayed=" + minsPlayed +
                 ", starts=" + starts +
+                ", imageURL='" + imageURL + '\'' +
                 '}';
     }
 }
