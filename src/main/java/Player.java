@@ -3,48 +3,54 @@ public class Player {
     private String name;
     private String team;
     private int age;
-    private int weight;
-    private int height;
     private String position;
     private int goals;
     private int assists;
     private int yellowCards;
     private int redCards;
-    private int manOfTheMatches;
     private int tackles;
     private int minsPlayed;
+    private int starts;
+    private String imageURL;
 
     /**
      * Represents a Player from the WhoScored website.
      * @param name of the player
-     * @param team the player is apart of
+     * @param team the player is a part of
      * @param age of the player
-     * @param weight of the player
-     * @param height of the player
      * @param position the player plays in
      * @param goals the number of goals the player has
      * @param assists the number of assists the player has
      * @param yellowCards the number of yellow cards the player has
      * @param redCards the number of red cards the player has
-     * @param manOfTheMatches the number of man of the matches the player has accumulated.
      * @param tackles the number of tackles the player averages in a game
      * @param minsPlayed the number of minutes played the player has played this season
+     * @param starts total number of starts the player has in the current season
+     * @param imageURL location of the players image icon on the internet
      */
-    public Player(String name, String team, int age, int weight, int height, String position, int goals,
-                  int assists, int yellowCards, int redCards, int manOfTheMatches, int tackles, int minsPlayed) {
+    public Player(String name, String team, int age, String position, int goals,
+                  int assists, int yellowCards, int redCards, int tackles, int minsPlayed, int starts,
+                  String imageURL) {
         this.name = name;
         this.team = team;
         this.age = age;
-        this.weight = weight;
-        this.height = height;
         this.position = position;
         this.goals = goals;
         this.assists = assists;
         this.yellowCards = yellowCards;
         this.redCards = redCards;
-        this.manOfTheMatches = manOfTheMatches;
         this.tackles = tackles;
         this.minsPlayed = minsPlayed;
+        this.starts = starts;
+        this.imageURL = imageURL;
+    }
+
+    public int getStarts() {
+        return starts;
+    }
+
+    public void setStarts(int starts) {
+        this.starts = starts;
     }
 
     public String getName() {
@@ -71,24 +77,16 @@ public class Player {
         this.age = age;
     }
 
-    public int getWeight() {
-        return weight;
-    }
-
-    public void setWeight(int weight) {
-        this.weight = weight;
-    }
-
-    public int getHeight() {
-        return height;
-    }
-
-    public void setHeight(int height) {
-        this.height = height;
-    }
-
     public String getPosition() {
         return position;
+    }
+
+    public String getImageURL() {
+        return imageURL;
+    }
+
+    public void setImageURL(String imageURL) {
+        this.imageURL = imageURL;
     }
 
     public void setPosition(String position) {
@@ -127,14 +125,6 @@ public class Player {
         this.redCards = redCards;
     }
 
-    public int getManOfTheMatches() {
-        return manOfTheMatches;
-    }
-
-    public void setManOfTheMatches(int manOfTheMatches) {
-        this.manOfTheMatches = manOfTheMatches;
-    }
-
     public int getTackles() {
         return tackles;
     }
@@ -149,5 +139,22 @@ public class Player {
 
     public void setMinsPlayed(int minsPlayed) {
         this.minsPlayed = minsPlayed;
+    }
+
+    @Override
+    public String toString() {
+        return "Player{" +
+                "name='" + name + '\'' +
+                ", team='" + team + '\'' +
+                ", age=" + age +
+                ", position='" + position + '\'' +
+                ", goals=" + goals +
+                ", assists=" + assists +
+                ", yellowCards=" + yellowCards +
+                ", redCards=" + redCards +
+                ", tackles=" + tackles +
+                ", minsPlayed=" + minsPlayed +
+                ", starts=" + starts +
+                '}';
     }
 }
