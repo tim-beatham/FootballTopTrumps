@@ -1,3 +1,7 @@
+package webserver.generatedata;
+
+import webserver.model.Player;
+
 import java.util.List;
 
 public class Players {
@@ -7,6 +11,8 @@ public class Players {
     public Players(List<Player> playerList) {
         this.playerList = playerList;
     }
+
+    public Players() {}
 
     public List<Player> getPlayerList() {
         return playerList;

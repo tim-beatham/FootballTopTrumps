@@ -1,8 +1,12 @@
+package webserver.generatedata;
+
 import org.codehaus.jackson.map.ObjectMapper;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import webserver.model.Player;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
@@ -13,57 +17,67 @@ import java.util.regex.Pattern;
  *
  * @author tim-beatham.github.io
  */
-public class GenChampData {
-
-    // Links to all of the teams in the championship.
-    private static Map<String, String> teams = new HashMap<>();
-
-    // Map of links to players in each team.
-    private static Map<String, List<String>> squads = new HashMap<>();
+public class GenData {
 
     // The URL of the championship table.
     private static final String CHAMPIONSHIP_TABLE = "https://fbref.com/en/comps/10/Championship-Stats";
-    private static final String CHAMPIONSHIP_TABLE_ID = "results32331_overall";
+    private static final String PREMIER_LEAGUE_TABLE = "https://fbref.com/en/comps/9/Premier-League-Stats";
+    private static final String BUNDESLIGA_TABLE = "https://fbref.com/en/comps/20/Bundesliga-Stats";
+    private static final String SERIE_A_TABLE = "https://fbref.com/en/comps/11/Serie-A-Stats";
+
+    // Get the tables that we want to process.
+    private static final Map<String, String> tables = new HashMap<>();
+
     private static final String FBREF_URL = "https://fbref.com/";
-    private static final String SQUAD_TABLE_ID = "stats_standard_ks_3233";
     private static final String PLAYER_SEASONS_ID = "stats_standard_ks_dom_lg";
-    private static final String MISC_TABLE_ID = "stats_misc_ks_dom_lg";
 
     // Regex used to extract information from the player.
     private static final String POSITION_REGEX = "Position: *([A-Z]+)";
 
 
     /**
-     * Gets the links to each team in the championship.
+     * Initialises the the tables hash map.
+     * This unfortunately has to be hard coded.
      */
-    public static void getTeams() throws IOException {
-        // Get the HTML document.
-        Document doc = Jsoup.connect(CHAMPIONSHIP_TABLE).userAgent("Mozilla").get();
-        // Get every team in the championship.
-        Elements teamsLink = doc.getElementById(CHAMPIONSHIP_TABLE_ID).select("a[href~=/en/squads/(.+)]");
+    public static void initTablesMap() {
+        tables.put("Championship", CHAMPIONSHIP_TABLE);
+        tables.put("Premier League", PREMIER_LEAGUE_TABLE);
+        tables.put("Bundesliga", BUNDESLIGA_TABLE);
+        tables.put("Serie A", SERIE_A_TABLE);
+    }
 
-        // Clear the list of teams first of all.
-        teams.clear();
+
+    /**
+     * Gets the links to each team in the championship.
+     * @return A map mapping a team to the corresponding team URL.
+     */
+    public static Map<String, String> getTeams(String division) throws IOException {
+        // Get the HTML document.
+        Document doc = Jsoup.connect(division).userAgent("Mozilla").get();
+        // Get every team in the championship.
+        Elements teamsLink = doc.select("table[id~=results\\d*_overall]").select("a[href~=/en/squads/(.+)]");
+
+        Map<String, String> teams = new HashMap<>();
 
         teamsLink.forEach(e -> {
             teams.put(e.text(), e.attr("href"));
         });
 
-        System.out.println(teams);
+        return teams;
     }
 
     /**
      * Retrieves links to each player in each squad.
      * @param url of the squad.
      */
-    public static void getSquad(String url, String squad) throws IOException {
+    public static List<String> getSquad(String url, String squad) throws IOException {
 
         url = FBREF_URL + url;
 
         Document doc = Jsoup.connect(url).userAgent("Mozilla").get();
 
         // Now we need to get links to each player.
-        Elements players = doc.getElementById(SQUAD_TABLE_ID)
+        Elements players = doc.select("table[id~=stats_standard_ks_\\d+]")
                 .select("th.left").select("a[href~=/en/players/(.+)]");
 
         List<String> playerURLs = new ArrayList<>();
@@ -72,15 +86,15 @@ public class GenChampData {
             playerURLs.add(e.attr("href"));
         });
 
-        squads.put(squad, playerURLs);
+        return playerURLs;
     }
 
     /**
-     * Creates an instance of a Player based on the url
+     * Creates an instance of a webserver.model.Player based on the url
      * supplied.
      * @param url of the profile of the player.
      */
-    public static Player genPlayer(String url, String club) throws Exception {
+    public static Player genPlayer(String url, String club, String division) throws Exception {
         url = FBREF_URL + url;
         Document doc = Jsoup.connect(url).userAgent("Mozilla").get();
 
@@ -131,8 +145,30 @@ public class GenChampData {
         String redCards = recentSeason.select("td[data-stat=cards_red]").text();
 
         return new Player(name, club, dOB, posString, Integer.parseInt(goalsScored), Integer.parseInt(assists), Integer.parseInt(yellowCards),
-                Integer.parseInt(redCards), Integer.parseInt(minsPlayed), Integer.parseInt(matchesPlayed), imageURL);
+                Integer.parseInt(redCards), Integer.parseInt(minsPlayed), Integer.parseInt(matchesPlayed), imageURL, division);
 
+    }
+
+    public static List<Player> getPlayers(String division) throws Exception {
+        Map<String, String> teams = getTeams(tables.get(division));
+
+        List<Player> playerList = new ArrayList<>();
+
+        // Iterate over the teams
+        for (String team : teams.keySet()) {
+            List<String> players = getSquad(teams.get(team), team);
+
+            for (String playerURL : players) {
+                try {
+                    Player player = genPlayer(playerURL, team, division);
+                    System.out.println(player);
+                    playerList.add(player);
+                } catch (Exception e) {}
+
+            }
+        }
+
+        return playerList;
     }
 
 
@@ -141,29 +177,12 @@ public class GenChampData {
      * @param args command line arguments
      */
     public static void main(String[] args) throws Exception {
-        getTeams();
-
-        Set<String> squadKeys = teams.keySet();
-
-        for (String team : squadKeys) {
-            getSquad(teams.get(team), team);
-        }
+        initTablesMap();
 
         List<Player> players = new ArrayList<>();
-        squadKeys = squads.keySet();
-        for (String squad : squadKeys) {
-            // Get a list of the player urls in the current squad.
-            List<String> playerURLs = squads.get(squad);
 
-            for (String playerURL : playerURLs) {
-                try {
-                    Player player = genPlayer(playerURL, squad);
-                    System.out.println(player);
-                    players.add(player);
-
-                } catch (Exception e) {
-                }
-            }
+        for (String division : tables.keySet()) {
+            players.addAll(getPlayers(division));
         }
 
         Players playersObj = new Players(players);

@@ -1,8 +1,23 @@
+package webserver.model;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import java.util.Objects;
+
+/**
+ * Represents a player.
+ * @author timbeatham
+ */
+@Entity
 public class Player {
+
+    @Id @GeneratedValue
+    private Long id;
 
     private String name;
     private String team;
-    private String dOB;
+    private String birthDate;
     private String position;
     private int goals;
     private int assists;
@@ -11,12 +26,15 @@ public class Player {
     private int minsPlayed;
     private int starts;
     private String imageURL;
+    private String division;
+
+    public Player() {}
 
     /**
-     * Represents a Player from the WhoScored website.
+     * Represents a Player (POJO)
      * @param name of the player
      * @param team the player is a part of
-     * @param dOB of the player
+     * @param birthDate of the player
      * @param position the player plays in
      * @param goals the number of goals the player has
      * @param assists the number of assists the player has
@@ -25,13 +43,15 @@ public class Player {
      * @param minsPlayed the number of minutes played the player has played this season
      * @param starts total number of starts the player has in the current season
      * @param imageURL location of the players image icon on the internet
+     * @param division division the player plays in.
      */
-    public Player(String name, String team, String dOB, String position, int goals,
+    public Player(String name, String team, String birthDate, String position, int goals,
                   int assists, int yellowCards, int redCards, int minsPlayed, int starts,
-                  String imageURL) {
+                  String imageURL, String division) {
+        this.id = null;
         this.name = name;
         this.team = team;
-        this.dOB = dOB;
+        this.birthDate = birthDate;
         this.position = position;
         this.goals = goals;
         this.assists = assists;
@@ -40,6 +60,7 @@ public class Player {
         this.minsPlayed = minsPlayed;
         this.starts = starts;
         this.imageURL = imageURL;
+        this.division = division;
     }
 
     public int getStarts() {
@@ -66,13 +87,6 @@ public class Player {
         this.team = team;
     }
 
-    public String getDOB() {
-        return dOB;
-    }
-
-    public void setDOB(String dOB) {
-        this.dOB = dOB;
-    }
 
     public String getPosition() {
         return position;
@@ -130,12 +144,29 @@ public class Player {
         this.minsPlayed = minsPlayed;
     }
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(String birthDate) {
+        this.birthDate = birthDate;
+    }
+
     @Override
     public String toString() {
         return "Player{" +
-                "name='" + name + '\'' +
+                "id=" + id +
+                ", name='" + name + '\'' +
                 ", team='" + team + '\'' +
-                ", dOB='" + dOB + '\'' +
+                ", birthDate='" + birthDate + '\'' +
                 ", position='" + position + '\'' +
                 ", goals=" + goals +
                 ", assists=" + assists +
@@ -144,6 +175,32 @@ public class Player {
                 ", minsPlayed=" + minsPlayed +
                 ", starts=" + starts +
                 ", imageURL='" + imageURL + '\'' +
+                ", division='" + division + '\'' +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Player player = (Player) o;
+        return goals == player.goals &&
+                assists == player.assists &&
+                yellowCards == player.yellowCards &&
+                redCards == player.redCards &&
+                minsPlayed == player.minsPlayed &&
+                starts == player.starts &&
+                Objects.equals(id, player.id) &&
+                Objects.equals(name, player.name) &&
+                Objects.equals(team, player.team) &&
+                Objects.equals(birthDate, player.birthDate) &&
+                Objects.equals(position, player.position) &&
+                Objects.equals(imageURL, player.imageURL);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, team, birthDate, position, goals, assists,
+                yellowCards, redCards, minsPlayed, starts, imageURL);
     }
 }
