@@ -1,12 +1,13 @@
 package webserver.loader;
 
 import org.codehaus.jackson.map.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import webserver.generatedata.Players;
 import webserver.model.Player;
-import webserver.repository.ChampionshipRepository;
+import webserver.repository.PlayerRepository;
 
 import java.io.File;
 
@@ -16,18 +17,23 @@ import java.io.File;
 @Component
 public class DatabaseLoader {
 
+    @Autowired
+    private PlayerRepository repository;
+
     @Bean
-    CommandLineRunner init(ChampionshipRepository repository) {
+    CommandLineRunner init(PlayerRepository repository) {
         return args -> {
-
-            // Load from the JSON file.
+            // Empty the repository to begin with.
+            repository.deleteAll();
             ObjectMapper objectMapper = new ObjectMapper();
-            File file = new File("players.json");
-            Players players = objectMapper.readValue(file, Players.class);
+            Players players = objectMapper.readValue(new File("players.json"), Players.class);
+            repository.saveAll(players.getPlayerList()); // Insert all of the players to the database.
 
-            for (Player player : players.getPlayerList()){
-                repository.save(player);
+
+            for (Player player : repository.findAll()) {
+                System.out.println(player);
             }
+
         };
     }
 

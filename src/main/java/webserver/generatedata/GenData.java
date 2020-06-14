@@ -77,7 +77,7 @@ public class GenData {
         Document doc = Jsoup.connect(url).userAgent("Mozilla").get();
 
         // Now we need to get links to each player.
-        Elements players = doc.select("table[id~=stats_standard_ks_\\d+]")
+        Elements players = doc.select("table[id~=stats_standard_ks_\\d+]").get(0)
                 .select("th.left").select("a[href~=/en/players/(.+)]");
 
         List<String> playerURLs = new ArrayList<>();

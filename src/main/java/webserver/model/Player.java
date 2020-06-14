@@ -1,5 +1,7 @@
 package webserver.model;
 
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -10,7 +12,11 @@ import java.util.Objects;
  * @author timbeatham
  */
 
+@Document(collection = "players")
 public class Player {
+
+    @Id
+    public String id;
 
     private String name;
     private String team;
@@ -140,6 +146,13 @@ public class Player {
         this.minsPlayed = minsPlayed;
     }
 
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public String getBirthDate() {
         return birthDate;
@@ -149,6 +162,33 @@ public class Player {
         this.birthDate = birthDate;
     }
 
+    public String getDivision() {
+        return division;
+    }
+
+    public void setDivision(String division) {
+        this.division = division;
+    }
+
+
+    @Override
+    public String toString() {
+        return "Player{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", team='" + team + '\'' +
+                ", birthDate='" + birthDate + '\'' +
+                ", position='" + position + '\'' +
+                ", goals=" + goals +
+                ", assists=" + assists +
+                ", yellowCards=" + yellowCards +
+                ", redCards=" + redCards +
+                ", minsPlayed=" + minsPlayed +
+                ", starts=" + starts +
+                ", imageURL='" + imageURL + '\'' +
+                ", division='" + division + '\'' +
+                '}';
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -175,29 +215,4 @@ public class Player {
                 yellowCards, redCards, minsPlayed, starts, imageURL, division);
     }
 
-    @Override
-    public String toString() {
-        return "Player{" +
-                "name='" + name + '\'' +
-                ", team='" + team + '\'' +
-                ", birthDate='" + birthDate + '\'' +
-                ", position='" + position + '\'' +
-                ", goals=" + goals +
-                ", assists=" + assists +
-                ", yellowCards=" + yellowCards +
-                ", redCards=" + redCards +
-                ", minsPlayed=" + minsPlayed +
-                ", starts=" + starts +
-                ", imageURL='" + imageURL + '\'' +
-                ", division='" + division + '\'' +
-                '}';
-    }
-
-    public String getDivision() {
-        return division;
-    }
-
-    public void setDivision(String division) {
-        this.division = division;
-    }
 }
