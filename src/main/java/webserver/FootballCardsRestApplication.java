@@ -8,9 +8,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  */
 @SpringBootApplication
 public class FootballCardsRestApplication {
-
     public static void main(String[] args) {
         SpringApplication.run(FootballCardsRestApplication.class);
     }
-
 }

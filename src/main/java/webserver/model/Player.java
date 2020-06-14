@@ -9,11 +9,8 @@ import java.util.Objects;
  * Represents a player.
  * @author timbeatham
  */
-@Entity
-public class Player {
 
-    @Id @GeneratedValue
-    private Long id;
+public class Player {
 
     private String name;
     private String team;
@@ -48,7 +45,6 @@ public class Player {
     public Player(String name, String team, String birthDate, String position, int goals,
                   int assists, int yellowCards, int redCards, int minsPlayed, int starts,
                   String imageURL, String division) {
-        this.id = null;
         this.name = name;
         this.team = team;
         this.birthDate = birthDate;
@@ -144,13 +140,6 @@ public class Player {
         this.minsPlayed = minsPlayed;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getBirthDate() {
         return birthDate;
@@ -160,11 +149,36 @@ public class Player {
         this.birthDate = birthDate;
     }
 
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Player player = (Player) o;
+        return goals == player.goals &&
+                assists == player.assists &&
+                yellowCards == player.yellowCards &&
+                redCards == player.redCards &&
+                minsPlayed == player.minsPlayed &&
+                starts == player.starts &&
+                Objects.equals(name, player.name) &&
+                Objects.equals(team, player.team) &&
+                Objects.equals(birthDate, player.birthDate) &&
+                Objects.equals(position, player.position) &&
+                Objects.equals(imageURL, player.imageURL) &&
+                Objects.equals(division, player.division);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, team, birthDate, position, goals, assists,
+                yellowCards, redCards, minsPlayed, starts, imageURL, division);
+    }
+
     @Override
     public String toString() {
         return "Player{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
+                "name='" + name + '\'' +
                 ", team='" + team + '\'' +
                 ", birthDate='" + birthDate + '\'' +
                 ", position='" + position + '\'' +
@@ -179,28 +193,11 @@ public class Player {
                 '}';
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Player player = (Player) o;
-        return goals == player.goals &&
-                assists == player.assists &&
-                yellowCards == player.yellowCards &&
-                redCards == player.redCards &&
-                minsPlayed == player.minsPlayed &&
-                starts == player.starts &&
-                Objects.equals(id, player.id) &&
-                Objects.equals(name, player.name) &&
-                Objects.equals(team, player.team) &&
-                Objects.equals(birthDate, player.birthDate) &&
-                Objects.equals(position, player.position) &&
-                Objects.equals(imageURL, player.imageURL);
+    public String getDivision() {
+        return division;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, name, team, birthDate, position, goals, assists,
-                yellowCards, redCards, minsPlayed, starts, imageURL);
+    public void setDivision(String division) {
+        this.division = division;
     }
 }

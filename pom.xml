@@ -81,6 +81,16 @@
             <artifactId>neo4j</artifactId>
             <version>4.0.5</version>
         </dependency>
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongo-java-driver</artifactId>
+            <version>3.12.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-mongodb</artifactId>
+            <version>3.0.0.RELEASE</version>
+        </dependency>
     </dependencies>
 
     <properties>
