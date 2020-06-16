@@ -17,7 +17,7 @@ public class PlayerController {
 
     private final PlayerRepository repository;
 
-    private static final String OPERATORS = "(.*)(=|>|<)(.*)";
+    private static final String OPERATORS = "([a-zA-Z0-9/-]+)(=|>|<)([a-zA-Z0-9/-]+)";
 
     private static final List<String> NUMERICAL_PROPERTIES = Arrays.asList("goals", "assists", "yellowCards",
             "redCards", "minsPlayed", "starts");
@@ -47,14 +47,16 @@ public class PlayerController {
 
         List<Player> players = new ArrayList<>();
 
-        for (String subQuery : subQueries) {
+        for (int i = 0; i < subQueries.length; i++) {
+            String subQuery = subQueries[i];
+
             m = pattern.matcher(subQuery);
+
 
             if (m.find()) {
                 String opcode = m.group(1).trim();
                 char operator = m.group(2).charAt(0);
                 Object operand = m.group(3).trim();
-
 
                 if (NUMERICAL_PROPERTIES.contains(opcode)) {
                     try {
@@ -64,7 +66,7 @@ public class PlayerController {
                     }
                 }
 
-                if (players.isEmpty()) {
+                if (i == 0 && players.isEmpty()) {
                     players.addAll(repository.playerQuery(opcode, operator, operand));
                 } else {
                     players.retainAll(repository.playerQuery(opcode, operator, operand));
