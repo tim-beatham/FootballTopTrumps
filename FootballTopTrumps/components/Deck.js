@@ -48,9 +48,36 @@ class NewDeck extends React.Component {
             redCards: [startReds[0], startReds[1]],
             yellowCards: [startYellows[0], startYellows[1]],
             starts: [startStarts[0], startStarts[1]],
-            minsPlayed: [startPlayed[0], startPlayed[1]]       
+            minsPlayed: [startPlayed[0], startPlayed[1]],
+            selectedCards: []     
         }
     }
+
+    addSelectedCard = (cardID) => {
+        console.log(cardID)
+        if (this.state.selectedCards.find((element) => element === cardID) === undefined) {
+            this.setState({selectedCards: [...this.state.selectedCards, cardID]})
+        }
+        console.log("Add:", this.state.selectedCards)
+    }
+
+    deleteSelectedCard = (cardID) => {
+        if (this.state.selectedCards.find((element) => element === cardID) !== undefined) {
+            let tempList = this.state.selectedCards
+            tempList.splice(tempList.findIndex((element) => element === cardID), 1)
+            this.setState({selectedCards: tempList})
+        }
+        console.log("Remove:", this.state.selectedCards)
+    }
+
+    selectedCardsMsg = () => {
+
+        return (
+         <Text>You have selected {this.state.selectedCards.length} cards!</Text>
+        )
+
+    }
+
 
     onLeagueChange = (data) => {
         this.setState({league: data})
@@ -100,9 +127,7 @@ class NewDeck extends React.Component {
             query += "goals>" + this.state.goals[0] + ",goals<" + this.state.goals[1] + ",assists>" + this.state.assists[0] +
             ",assists<" + this.state.assists[1] + ",redCards>" + this.state.redCards[0] + ",redCards<" + this.state.redCards[1] + 
             ",yellowCards>" + this.state.yellowCards[0] + ",yellowCards<" + this.state.yellowCards[1] + ",minsPlayed>" + this.state.minsPlayed[0] +
-            ",minsPlayed<" + this.state.minsPlayed[1] + ",starts>" + this.state.starts[0] + ",starts<" + this.state.starts[1]
-
-        
+            ",minsPlayed<" + this.state.minsPlayed[1] + ",starts>" + this.state.starts[0] + ",starts<" + this.state.starts[1]        
 
         return query
     }
@@ -119,9 +144,9 @@ class NewDeck extends React.Component {
 
         let leagues = [
             {value: 'Championship'},
-            {value: 'Premier League'},
+            {value: 'PremierLeague'},
             {value: 'Bundesliga'},
-            {value: 'Serie A'},
+            {value: 'SerieA'},
             {value: 'Any'}
         ]
 
@@ -167,10 +192,12 @@ class NewDeck extends React.Component {
                 <View style={deckStyle.centre}>
                     <TouchableOpacity style={[Styles.buttonTemplate, deckStyle.submitButton]} 
                     onPress={() => this.props.navigation.navigate('Results',
-                                                                {query: this.genQuery()})}>
+                                                                {query: this.genQuery(), addSelectedCard: this.addSelectedCard, 
+                                                                deleteSelectedCard: this.deleteSelectedCard, selectedCards: this.state.selectedCards})}>
 
-                        <Text style={Styles.buttonText}>Submit</Text>
+                        {<Text style={Styles.buttonText}>Submi{/*  */}t</Text>}
                     </TouchableOpacity>
+                    {this.selectedCardsMsg()}
                 </View>
             </ScrollView>
         );
@@ -189,8 +216,13 @@ class Results extends React.Component {
 
         this.state = {
             players: [],
-            query: this.props.route.params.query
+            query: this.props.route.params.query,
+            addSelectedCard: this.props.route.params.addSelectedCard,
+            deleteSelectedCard: this.props.route.params.deleteSelectedCard,
+            selectedCards: this.props.route.params.selectedCards
         }
+
+        console.log(this.state.addSelectedCard)
 
     }
 
@@ -215,7 +247,9 @@ class Results extends React.Component {
     addProfileWidgets = () => {
         let playerProfiles = []
         for (let player of this.state.players) {
-            playerProfiles.push(<PlayerWidget player={player}/>)
+            playerProfiles.push(<PlayerWidget player={player} addSelectedCard={this.state.addSelectedCard} 
+                                                                deleteSelectedCard={this.state.deleteSelectedCard}
+                                                                selectedCards= {this.state.selectedCards} />)
         }
 
         return (
@@ -245,8 +279,25 @@ class PlayerWidget extends React.Component {
         }
     }
 
+    componentDidMount = () => {
+        this.setHighlighted()
+    }
+
     select = () => {
+
+        if (this.state.highlighted) 
+            this.props.deleteSelectedCard(this.props.player.id)
+        else
+            this.props.addSelectedCard(this.props.player.id)
+
         this.setState({highlighted: !this.state.highlighted})
+    }
+
+    setHighlighted = () => {
+        if (this.props.selectedCards.findIndex((element) => element === this.props.player.id) > -1)
+            this.setState({highlighted: true})
+        else
+            this.setState({highlighted: false})
     }
 
     render() {
@@ -255,7 +306,7 @@ class PlayerWidget extends React.Component {
 
         return (
             <TouchableOpacity style={[playerWidgetStyle.container, this.state.highlighted ? 
-            playerWidgetStyle.highlighted : playerWidgetStyle.notHighlighted]} onPress={() => this.select()}>
+            playerWidgetStyle.highlighted : playerWidgetStyle.notHighlighted]} onPress={this.select}>
 
             <Image style={{width:100, height:100}} source={{uri: this.props.player.imageURL}} />
             <View>

@@ -41,9 +41,9 @@ public class GenData {
      */
     public static void initTablesMap() {
         tables.put("Championship", CHAMPIONSHIP_TABLE);
-        //tables.put("Premier League", PREMIER_LEAGUE_TABLE);
-        //tables.put("Bundesliga", BUNDESLIGA_TABLE);
-        //tables.put("Serie A", SERIE_A_TABLE);
+        tables.put("PremierLeague", PREMIER_LEAGUE_TABLE);
+        tables.put("Bundesliga", BUNDESLIGA_TABLE);
+        tables.put("SerieA", SERIE_A_TABLE);
     }
 
 
