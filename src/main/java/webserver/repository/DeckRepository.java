@@ -5,4 +5,4 @@ import org.springframework.stereotype.Repository;
 import webserver.model.Deck;
 
 @Repository
-public interface DeckRepository extends MongoRepository<Deck, String>{}
+public interface DeckRepository extends MongoRepository<Deck, String>, DeckRepositoryCustom{}

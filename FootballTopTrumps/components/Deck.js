@@ -332,6 +332,7 @@ class PlayerWidget extends React.Component {
     render() {
         let text = " Name: " + this.props.player.name + "\n Goals: " + this.props.player.goals
                     + "\n Assists: " + this.props.player.assists + "\n Starts: " + this.props.player.starts
+                    + "\n Team: " + this.props.player.team
 
         return (
             <TouchableOpacity style={[playerWidgetStyle.container, this.state.highlighted ? 
@@ -361,10 +362,60 @@ class ViewDecks extends React.Component {
     }
 
     getDecks = () => {
-        axios.get(ENDPOINT + "decks/")
+
+        let searchName = ""
+
+        if (this.state.query !== "")
+            searchName = "search?query=" + this.state.query
+
+        axios.get(ENDPOINT + "decks/" + searchName)
             .then(response => {
                 this.setState({decks: response.data})
             })
+    }
+
+    calcJaccard = (str, search) => {
+
+        let stringSplit = str.split("")
+        let searchSplit = search.split("")
+
+        let union = [...new Set([...stringSplit, ...searchSplit])]
+
+        let intersection = [...stringSplit]
+
+        intersection.filter(value => searchSplit.includes(value))
+
+        intersection = [...new Set([...intersection])]
+        
+        return intersection.length / union.length
+    }
+
+    sortDecks = (search) => {
+
+        console.log(search)
+        
+        let sortedDecks = [...this.state.decks]
+
+        sortedDecks.sort((d1, d2) => {
+            
+            // Calculate the jaccard score of the two lists.
+            let jaccardD1 = this.calcJaccard(d1.deckName, search)
+            let jaccardD2 = this.calcJaccard(d2.deckName, search)
+
+            console.log(jaccardD1)
+            console.log(jaccardD2)
+
+
+            if (jaccardD1 < jaccardD2)
+                return 1
+            else if (jaccardD1 > jaccardD2)
+                return -1
+
+            return 0
+
+        })
+
+        this.setState({decks: sortedDecks})        
     }
 
     addDeckWidgets = () => {
@@ -386,7 +437,9 @@ class ViewDecks extends React.Component {
     render() {
         return(
             <ScrollView>
-                <TextInput placeholder={"Search"}/>
+                <View>
+                    <TextInput placeholder={"Search"} onSubmitEditing={(obj) => this.sortDecks(obj.nativeEvent.text)}/>
+                </View>
                 {this.addDeckWidgets()}
             </ScrollView>
         )

@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping(value = "/api/v1/")
-public class PlayerController {
+public class DBController {
 
     private final PlayerRepository playerRepository;
     private final DeckRepository deckRepository;
@@ -25,8 +25,8 @@ public class PlayerController {
     private static final List<String> NUMERICAL_PROPERTIES = Arrays.asList("goals", "assists", "yellowCards",
             "redCards", "minsPlayed", "starts");
 
-    public PlayerController(PlayerRepository playerRepository,
-                            DeckRepository deckRepository) {
+    public DBController(PlayerRepository playerRepository,
+                        DeckRepository deckRepository) {
         this.playerRepository = playerRepository;
         this.deckRepository = deckRepository;
     }
@@ -94,5 +94,11 @@ public class PlayerController {
     @PostMapping("decks/")
     public Deck addDeck(@RequestBody Deck newDeck) {
         return deckRepository.save(newDeck);
+    }
+
+    @GetMapping("decks/search")
+    @ResponseBody
+    public List<Deck> queryDecks(@RequestParam(value = "query") String search) {
+        return deckRepository.searchDecks(search);
     }
 }
