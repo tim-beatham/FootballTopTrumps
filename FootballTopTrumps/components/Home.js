@@ -13,10 +13,12 @@ class Home extends React.Component {
                     <Text style={Styles.titleText}>Football Top Trumps</Text>
                 </View>
                 <View style={homeStyle.buttonContainer}>
-                    <TouchableOpacity style={[Styles.buttonTemplate, homeStyle.createContainer]}>
+                    <TouchableOpacity style={[Styles.buttonTemplate, homeStyle.createContainer]} 
+                                                onPress={() => this.props.navigation.navigate("View Decks", {isCreatingGame: true})}>
                         <Text style={Styles.buttonText}>Create Game</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={[Styles.buttonTemplate, homeStyle.joinContainer]}>
+                    <TouchableOpacity style={[Styles.buttonTemplate, homeStyle.joinContainer]}
+                                      onPress={() => this.props.navigation.navigate("JoinGame")}>
                         <Text style={Styles.buttonText}>Join Game</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={[Styles.buttonTemplate, homeStyle.newDeckContainer]}

@@ -30,8 +30,6 @@ public class DatabaseLoader {
             //Players players = objectMapper.readValue(new File("players.json"), Players.class);
             //repository.saveAll(players.getPlayerList()); // Insert all of the players to the database.
 
-            deckRepository.deleteAll();
-
             for (Player player : repository.findAll()) {
                 System.out.println(player);
             }

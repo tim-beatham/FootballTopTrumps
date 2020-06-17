@@ -7,6 +7,8 @@ import {colourPalette, Styles} from './Stylesheet.js'
 import {Home} from './components/Home.js'
 import {Deck, NewDeck, Results, ViewDecks, ViewDeckScreen} from './components/Deck.js'
 import { ScreenStack } from 'react-native-screens'
+import GameLobby from './components/GameLobby'
+import JoinGame from './components/JoinGame'
 
 const Stack = createStackNavigator()
 
@@ -32,6 +34,8 @@ class App extends React.Component {
           <Stack.Screen name="Results" component={Results} />
           <Stack.Screen name="View Decks" component={ViewDecks} />
           <Stack.Screen name="View Deck Screen" component={ViewDeckScreen} />
+          <Stack.Screen name="GameLobby" component={GameLobby} />
+          <Stack.Screen name="JoinGame" component={JoinGame}></Stack.Screen>
         </Stack.Navigator>
       </NavigationContainer>
     );

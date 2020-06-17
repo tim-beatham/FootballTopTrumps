@@ -7,6 +7,7 @@ import axios from 'axios'
 import { render } from 'react-dom'
 import 'react-native-gesture-handler'
 import Collapsible from 'react-collapsible'
+import { v4 as uuidv4} from 'uuid';
 
 class Deck extends React.Component {
 
@@ -354,7 +355,8 @@ class ViewDecks extends React.Component {
 
         this.state = {
             decks: [],
-            query: this.props.route.params.query
+            query: this.props.route.params.query,
+            isCreatingGame: this.props.route.params.isCreatingGame
         }
 
         this.getDecks()
@@ -423,7 +425,8 @@ class ViewDecks extends React.Component {
         let deckWidgets = []
 
         for (let deck of this.state.decks) {
-            deckWidgets.push(<DeckWidget deck={deck} navigation={this.props.navigation} />)
+            deckWidgets.push(<DeckWidget deck={deck} navigation={this.props.navigation} 
+                                                    isCreatingGame={this.state.isCreatingGame} />)
         }
 
         return (
@@ -458,7 +461,10 @@ class DeckWidget extends React.Component {
 
     render () {
         return (
-            <TouchableOpacity style={deckWidgetStyle.container} onPress={() => this.props.navigation.navigate("View Deck Screen", {playerIDs: this.props.deck.players})}>
+            <TouchableOpacity style={deckWidgetStyle.container} 
+                    onPress={() => this.props.navigation.navigate("View Deck Screen", {playerIDs: this.props.deck.players, 
+                                                                                isCreatingGame: this.props.isCreatingGame})}>
+
                 <Text style={Styles.buttonText}>{this.props.deck.deckName}</Text>    
             </TouchableOpacity>
         )
@@ -473,9 +479,9 @@ class ViewDeckScreen extends React.Component {
 
         this.state = {
             playerIDs: this.props.route.params.playerIDs,
-            cards: []
+            cards: [],
+            isCreatingGame: this.props.route.params.isCreatingGame
         }
-
         this.genCards()
     }
 
@@ -485,6 +491,18 @@ class ViewDeckScreen extends React.Component {
                 .then(response => {
                     this.setState({cards: [...this.state.cards, response.data]})
                 })
+        }
+    }
+
+    drawButton = () => {
+        if (this.state.isCreatingGame) {
+            return (
+                <TouchableOpacity style={[Styles.buttonTemplate, selectDeckStyle.selectDeck]}
+                                    onPress={() => this.props.navigation.navigate("GameLobby", 
+                                    {createGame: true})}>
+                    <Text style={Styles.buttonText}>Select Deck</Text>
+                </TouchableOpacity>
+            )
         }
     }
 
@@ -499,6 +517,7 @@ class ViewDeckScreen extends React.Component {
         return (
             <View>
                 {playerWidgets}
+                {this.drawButton()}
             </View>
         )
     }
@@ -514,6 +533,12 @@ class ViewDeckScreen extends React.Component {
     
 
 }
+
+const selectDeckStyle = StyleSheet.create({
+    selectDeck: {
+        backgroundColor: colourPalette.green
+    }
+})
 
 const playerWidgetStyle = StyleSheet.create({
     container: {
