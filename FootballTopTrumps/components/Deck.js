@@ -1,10 +1,12 @@
 import React from 'react'
 import {colourPalette, Styles} from '../Stylesheet'
-import {Text, TouchableOpacity, View, StyleSheet, ScrollView, Image} from 'react-native'
+import {Text, TouchableOpacity, View, StyleSheet, ScrollView, Image, Button, TextInput} from 'react-native'
 import { Dropdown } from 'react-native-material-dropdown'
 import MultiSlider from '@ptomasroos/react-native-multi-slider'
 import axios from 'axios'
 import { render } from 'react-dom'
+import 'react-native-gesture-handler'
+import Collapsible from 'react-collapsible'
 
 class Deck extends React.Component {
 
@@ -17,7 +19,8 @@ class Deck extends React.Component {
                 onPress={() => this.props.navigation.navigate("New Deck")}>
                     <Text style={Styles.buttonText}>New Deck</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[deckStyle.viewDeckButton, Styles.buttonTemplate]} >
+                <TouchableOpacity style={[deckStyle.viewDeckButton, Styles.buttonTemplate]} 
+                onPress={() => this.props.navigation.navigate("View Decks", {query: ""})}>
                     <Text style={Styles.buttonText}>View Decks</Text>
                 </TouchableOpacity>
                 
@@ -49,16 +52,16 @@ class NewDeck extends React.Component {
             yellowCards: [startYellows[0], startYellows[1]],
             starts: [startStarts[0], startStarts[1]],
             minsPlayed: [startPlayed[0], startPlayed[1]],
-            selectedCards: []     
+            selectedCards: [],
+            deckName: ""     
         }
     }
 
     addSelectedCard = (cardID) => {
-        console.log(cardID)
+
         if (this.state.selectedCards.find((element) => element === cardID) === undefined) {
             this.setState({selectedCards: [...this.state.selectedCards, cardID]})
         }
-        console.log("Add:", this.state.selectedCards)
     }
 
     deleteSelectedCard = (cardID) => {
@@ -67,7 +70,6 @@ class NewDeck extends React.Component {
             tempList.splice(tempList.findIndex((element) => element === cardID), 1)
             this.setState({selectedCards: tempList})
         }
-        console.log("Remove:", this.state.selectedCards)
     }
 
     selectedCardsMsg = () => {
@@ -84,12 +86,10 @@ class NewDeck extends React.Component {
     }
 
     onPositionChange = (data) => {
-        console.log("position changed")
         this.setState({position: data})
     }
 
     onAssistsChange = (data) => {
-        console.log(data)
         this.setState({assists: [data[0] - 1, data[1] + 1]})
     }
 
@@ -132,6 +132,26 @@ class NewDeck extends React.Component {
         return query
     }
 
+    submitDeck = () => {
+        // PUT request to the server passing the players selected
+        // and the name of the deck.
+        
+
+        if (this.state.deckName !== "" && this.state.selectedCards.length !== 0){
+            let deck = {
+                deckName: this.state.deckName,
+                players: this.state.selectedCards
+            }
+
+            axios.post(ENDPOINT + "decks/", deck)
+            this.props.navigation.navigate("Deck")
+        }
+    }
+
+    setDeckName = (event) => {
+        this.setState({deckName: event.nativeEvent.text})
+    }
+
 
     render() {
 
@@ -144,9 +164,9 @@ class NewDeck extends React.Component {
 
         let leagues = [
             {value: 'Championship'},
-            {value: 'PremierLeague'},
+            {value: 'Premier League'},
             {value: 'Bundesliga'},
-            {value: 'SerieA'},
+            {value: 'Serie A'},
             {value: 'Any'}
         ]
 
@@ -156,6 +176,7 @@ class NewDeck extends React.Component {
                     <Text style={Styles.titleText}>Search for Cards</Text>
                 </View>
                 <View style={deckStyle.form}>
+                    <TextInput placeholder={"Deck Name"} onChange={this.setDeckName} />
                     <Dropdown label="Position" data={positions} onChangeText={this.onPositionChange} />
                     <Dropdown label="League" onChangeText={this.onLeagueChange} data={leagues} />
                     <View style={deckStyle.sliderContaner}>
@@ -195,9 +216,16 @@ class NewDeck extends React.Component {
                                                                 {query: this.genQuery(), addSelectedCard: this.addSelectedCard, 
                                                                 deleteSelectedCard: this.deleteSelectedCard, selectedCards: this.state.selectedCards})}>
 
-                        {<Text style={Styles.buttonText}>Submi{/*  */}t</Text>}
+                        {<Text style={Styles.buttonText}>Search</Text>}
                     </TouchableOpacity>
                     {this.selectedCardsMsg()}
+                    <View style={deckStyle.createBanner}>
+                        <TouchableOpacity style={[Styles.buttonTemplate, deckStyle.submitDeck]} onPress={this.submitDeck}>
+                            <Text style={Styles.buttonText}>Create Deck</Text>
+                        </TouchableOpacity>
+                    </View>
+                        
+
                 </View>
             </ScrollView>
         );
@@ -205,14 +233,12 @@ class NewDeck extends React.Component {
 
 }
 
-const ENDPOINT = "http://81.154.167.160:8080/api/v1/players/"
+const ENDPOINT = "http://81.154.167.160:8080/api/v1/"
 
 class Results extends React.Component {
 
     constructor(props) {
         super(props)
-
-        console.log(this.props)
 
         this.state = {
             players: [],
@@ -222,13 +248,12 @@ class Results extends React.Component {
             selectedCards: this.props.route.params.selectedCards
         }
 
-        console.log(this.state.addSelectedCard)
 
     }
 
     genProfiles = () => {
 
-        axios.get(ENDPOINT + "search?query=" + this.state.query)
+        axios.get(ENDPOINT + "players/search?query=" + this.state.query)
             .then(response => {
                 this.setState({players: response.data})
             })
@@ -247,9 +272,10 @@ class Results extends React.Component {
     addProfileWidgets = () => {
         let playerProfiles = []
         for (let player of this.state.players) {
-            playerProfiles.push(<PlayerWidget player={player} addSelectedCard={this.state.addSelectedCard} 
+            playerProfiles.push(<PlayerWidget player={player}   addSelectedCard={this.state.addSelectedCard} 
                                                                 deleteSelectedCard={this.state.deleteSelectedCard}
-                                                                selectedCards= {this.state.selectedCards} />)
+                                                                selectedCards={this.state.selectedCards} 
+                                                                creatingDeck={true}/>)
         }
 
         return (
@@ -272,25 +298,28 @@ class Results extends React.Component {
 
 class PlayerWidget extends React.Component {
 
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.state = {
             highlighted: false
         }
     }
 
     componentDidMount = () => {
-        this.setHighlighted()
+        if (this.props.creatingDeck){
+            this.setHighlighted()
+        }
     }
 
     select = () => {
+        if (this.props.creatingDeck){
+            if (this.state.highlighted) 
+                this.props.deleteSelectedCard(this.props.player.id)
+            else
+                this.props.addSelectedCard(this.props.player.id)
 
-        if (this.state.highlighted) 
-            this.props.deleteSelectedCard(this.props.player.id)
-        else
-            this.props.addSelectedCard(this.props.player.id)
-
-        this.setState({highlighted: !this.state.highlighted})
+            this.setState({highlighted: !this.state.highlighted})
+        }
     }
 
     setHighlighted = () => {
@@ -317,6 +346,122 @@ class PlayerWidget extends React.Component {
     }
 }
 
+class ViewDecks extends React.Component {
+
+    constructor(props) {
+        super(props)
+
+        this.state = {
+            decks: [],
+            query: this.props.route.params.query
+        }
+
+        this.getDecks()
+
+    }
+
+    getDecks = () => {
+        axios.get(ENDPOINT + "decks/")
+            .then(response => {
+                this.setState({decks: response.data})
+            })
+    }
+
+    addDeckWidgets = () => {
+
+        let deckWidgets = []
+
+        for (let deck of this.state.decks) {
+            deckWidgets.push(<DeckWidget deck={deck} navigation={this.props.navigation} />)
+        }
+
+        return (
+            <View>
+                {deckWidgets}
+            </View>
+        )
+
+    }
+
+    render() {
+        return(
+            <ScrollView>
+                <TextInput placeholder={"Search"}/>
+                {this.addDeckWidgets()}
+            </ScrollView>
+        )
+    }
+}
+
+class DeckWidget extends React.Component {
+
+    constructor(props) {
+        super(props)
+
+        this.state = {
+            deck: this.props.deck
+        }
+    }
+
+    render () {
+        return (
+            <TouchableOpacity style={deckWidgetStyle.container} onPress={() => this.props.navigation.navigate("View Deck Screen", {playerIDs: this.props.deck.players})}>
+                <Text style={Styles.buttonText}>{this.props.deck.deckName}</Text>    
+            </TouchableOpacity>
+        )
+    }    
+}
+
+
+class ViewDeckScreen extends React.Component {
+
+    constructor(props) {
+        super(props)
+
+        this.state = {
+            playerIDs: this.props.route.params.playerIDs,
+            cards: []
+        }
+
+        this.genCards()
+    }
+
+    genCards = () => {
+        for (let playerID of this.state.playerIDs) {
+            axios.get(ENDPOINT + "players/" + playerID)
+                .then(response => {
+                    this.setState({cards: [...this.state.cards, response.data]})
+                })
+        }
+    }
+
+    renderCards = () => {
+        let playerWidgets = []
+
+        for (let card of this.state.cards) {
+            console.log(card)
+            playerWidgets.push(<PlayerWidget player={card} />)
+        }
+
+        return (
+            <View>
+                {playerWidgets}
+            </View>
+        )
+    }
+
+    render () {
+        return (
+            <ScrollView>
+                {this.renderCards()}
+            </ScrollView>
+        )
+    }
+
+    
+
+}
+
 const playerWidgetStyle = StyleSheet.create({
     container: {
         width: '100%',
@@ -328,6 +473,16 @@ const playerWidgetStyle = StyleSheet.create({
     },
     notHighlighted: {
         backgroundColor: "white"
+    }
+})
+
+const deckWidgetStyle = StyleSheet.create({
+    container: {
+        width: '100%',
+        height: 100,
+        backgroundColor: colourPalette.red,
+        justifyContent: 'center',
+        alignItems: 'center'
     }
 })
 
@@ -365,7 +520,19 @@ const deckStyle = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         height: 200
+    },
+    submitDeck: {
+        backgroundColor: colourPalette.green,
+        padding: 15
+    },
+    createBanner: {
+        backgroundColor: colourPalette.red,
+        width: '100%',
+        margin: 30,
+        height: '40%',
+        alignContent: 'center',
+        justifyContent: 'center'
     }
 })
 
-export {Deck, NewDeck, Results}
+export {Deck, NewDeck, Results, ViewDecks, ViewDeckScreen}

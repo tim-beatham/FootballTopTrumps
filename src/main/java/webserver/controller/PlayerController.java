@@ -1,43 +1,48 @@
 package webserver.controller;
 
+import org.springframework.stereotype.Repository;
 import org.springframework.web.bind.annotation.*;
+import webserver.model.Deck;
 import webserver.model.Player;
+import webserver.repository.DeckRepository;
 import webserver.repository.PlayerRepository;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @RestController
-@RequestMapping(value = "/api/v1/players")
+@RequestMapping(value = "/api/v1/")
 public class PlayerController {
 
-    private final PlayerRepository repository;
+    private final PlayerRepository playerRepository;
+    private final DeckRepository deckRepository;
 
     private static final String OPERATORS = "([a-zA-Z0-9/-]+)(=|>|<)([a-zA-Z0-9/-]+)";
 
     private static final List<String> NUMERICAL_PROPERTIES = Arrays.asList("goals", "assists", "yellowCards",
             "redCards", "minsPlayed", "starts");
 
-    public PlayerController(PlayerRepository repository) {
-        this.repository = repository;
+    public PlayerController(PlayerRepository playerRepository,
+                            DeckRepository deckRepository) {
+        this.playerRepository = playerRepository;
+        this.deckRepository = deckRepository;
     }
 
-    @GetMapping("/")
+    @GetMapping("players/")
     public List<Player> all() {
-        return repository.findAll();
+        return playerRepository.findAll();
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("players/{id}")
     public Player one(@PathVariable String id) {
-        return repository.findById(id)
+        return playerRepository.findById(id)
                 .orElseThrow(null);
     }
 
-    @GetMapping("/search")
+    @GetMapping("players/search")
     @ResponseBody
     public List<Player> queryPlayers(@RequestParam(value = "query") String search){
         String[] subQueries = search.split(",");
@@ -66,10 +71,10 @@ public class PlayerController {
                     }
                 }
 
-                if (i == 0 && players.isEmpty()) {
-                    players.addAll(repository.playerQuery(opcode, operator, operand));
+                if (i == 0) {
+                    players.addAll(playerRepository.playerQuery(opcode, operator, operand));
                 } else {
-                    players.retainAll(repository.playerQuery(opcode, operator, operand));
+                    players.retainAll(playerRepository.playerQuery(opcode, operator, operand));
                 }
 
             } else {
@@ -80,5 +85,14 @@ public class PlayerController {
         return players;
     };
 
+    @GetMapping("decks/")
+    @ResponseBody
+    public List<Deck> getDecks() {
+        return deckRepository.findAll();
+    }
 
+    @PostMapping("decks/")
+    public Deck addDeck(@RequestBody Deck newDeck) {
+        return deckRepository.save(newDeck);
+    }
 }
