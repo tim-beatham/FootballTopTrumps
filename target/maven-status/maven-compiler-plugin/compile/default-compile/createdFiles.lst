@@ -1,0 +1,15 @@
+webserver/repository/PlayerRepositoryCustom.class
+webserver/exceptions/PlayerNotFoundException.class
+webserver/loader/DatabaseLoader.class
+webserver/generatedata/NoDomesticLeagueException.class
+webserver/repository/PlayerRepositoryImpl.class
+webserver/repository/DeckRepositoryImpl.class
+webserver/repository/DeckRepositoryCustom.class
+webserver/repository/DeckRepository.class
+webserver/generatedata/GenData.class
+webserver/FootballCardsRestApplication.class
+webserver/model/Deck.class
+webserver/generatedata/Players.class
+webserver/controller/DBController.class
+webserver/repository/PlayerRepository.class
+webserver/model/Player.class

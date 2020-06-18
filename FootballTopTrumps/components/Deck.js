@@ -462,7 +462,7 @@ class DeckWidget extends React.Component {
     render () {
         return (
             <TouchableOpacity style={deckWidgetStyle.container} 
-                    onPress={() => this.props.navigation.navigate("View Deck Screen", {playerIDs: this.props.deck.players, 
+                    onPress={() => this.props.navigation.navigate("View Deck Screen", {deck: this.props.deck, 
                                                                                 isCreatingGame: this.props.isCreatingGame})}>
 
                 <Text style={Styles.buttonText}>{this.props.deck.deckName}</Text>    
@@ -478,7 +478,7 @@ class ViewDeckScreen extends React.Component {
         super(props)
 
         this.state = {
-            playerIDs: this.props.route.params.playerIDs,
+            deck: this.props.route.params.deck,
             cards: [],
             isCreatingGame: this.props.route.params.isCreatingGame
         }
@@ -486,7 +486,7 @@ class ViewDeckScreen extends React.Component {
     }
 
     genCards = () => {
-        for (let playerID of this.state.playerIDs) {
+        for (let playerID of this.state.deck.players) {
             axios.get(ENDPOINT + "players/" + playerID)
                 .then(response => {
                     this.setState({cards: [...this.state.cards, response.data]})
@@ -499,7 +499,7 @@ class ViewDeckScreen extends React.Component {
             return (
                 <TouchableOpacity style={[Styles.buttonTemplate, selectDeckStyle.selectDeck]}
                                     onPress={() => this.props.navigation.navigate("GameLobby", 
-                                    {createGame: true})}>
+                                    {createGame: true, deck: this.state.deck})}>
                     <Text style={Styles.buttonText}>Select Deck</Text>
                 </TouchableOpacity>
             )

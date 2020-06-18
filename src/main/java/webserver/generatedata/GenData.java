@@ -176,6 +176,7 @@ public class GenData {
     /**
      * @param args command line arguments
      */
+    /*
     public static void main(String[] args) throws Exception {
         initTablesMap();
 
@@ -189,4 +190,7 @@ public class GenData {
         ObjectMapper playersMapper = new ObjectMapper();
         playersMapper.writerWithDefaultPrettyPrinter().writeValue(new FileWriter("players.json"), playersObj);
     }
+    */
+
 }
+
