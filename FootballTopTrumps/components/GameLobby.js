@@ -67,7 +67,7 @@ class GameLobby extends React.Component {
             
         } else {
             this.socket.emit("clientDisconnecting", {gameID: this.gameID, 
-                userID: this.userID})
+                userID: this.uniqueID})
         }
         this.socket.disconnect()
     }
@@ -107,10 +107,20 @@ class GameLobby extends React.Component {
         })
     }
 
+    popCard = () => {
+        this.setState({cards: this.state.cards.slice(1)})
+    }     
+    
+    addCard = (cardID) => {
+        this.setState({cards: [...this.state.cards, cardID]})
+    }
+
     renderWidgets = () => {
         if (this.state.cards.length > 0) {
             return (
-                <Card cards={this.state.cards} />
+                <Card cards={this.state.cards} socket={this.socket} 
+                            gameID={this.gameID} userID={this.uniqueID}
+                            popCard={this.popCard} addCard={this.addCard} />
             )
         } else {
             return (
@@ -150,32 +160,69 @@ class Card extends React.Component {
 
         this.state = {
             playersObjs: [],
-            cardsLeft: this.props.cards.length,
             currentPlayer: undefined
         }
 
+        this.events()
+
     }
 
-    componentDidMount = () => {
-        for (let playerID of this.props.cards) {
-            axios.get(REST_ENDPOINT + "/players/" + playerID)
-                .then(response => {
-                    this.setState({playersObjs: [...this.state.playersObjs, response.data]})
-                })
-        }
+    events = () => {
+        this.props.socket.on("requestCards", (winner) => {
+            this.props.socket.emit("sendCardToWinner", 
+                        {cardID:this.state.currentPlayer.id, gameID: this.props.gameID,
+                            winner: winner})
+            this.props.popCard()
+            this.getNextCard()
+        })
 
+        this.props.socket.on("addCard", (info) => {
+            console.log("Checking singular", info.cardID)
+            if (this.props.userID === info.winner)
+                this.props.addCard(info.cardID)
+        })
+
+    }
+
+    wonRound = () => {
+        console.log("Cards:", this.props.cards.length)
+        this.props.socket.emit("wonRound", {id: this.props.userID,
+                                    winner: this.props.userID})
+    }
+
+    getNextCard = () => {
         axios.get(REST_ENDPOINT + "/players/" + this.props.cards[0])
             .then(response => {
                 this.setState({currentPlayer: response.data})
             })        
     }
 
+    componentDidMount = () => {
+        this.getNextCard()
+    }
+
     renderPlayer = () => {
         if (this.state.currentPlayer !== undefined) {
-            console.log(this.state.currentPlayer)
             return (
                 <View style={cardStyle.cardContainer}>
-                    <Image style={{width:200, height:200}} source={{uri: this.state.currentPlayer.imageURL}}/>
+                    <Image style={{width:300, height:300}} source={{uri: this.state.currentPlayer.imageURL}}/>
+                    <View style={cardStyle.metaInfo}>
+                        <Text style={cardStyle.cardText}>Name: {this.state.currentPlayer.name}</Text>
+                        <Text style={cardStyle.cardText}>Club: {this.state.currentPlayer.team}</Text>
+                        <Text style={cardStyle.cardText}>Division: {this.state.currentPlayer.division}</Text>
+                        <Text style={cardStyle.cardText}>Position: {this.state.currentPlayer.position}</Text>
+                    </View>
+                    <View style={cardStyle.keyInfo}>
+                        <Text style={cardStyle.cardText}>Goals: {this.state.currentPlayer.goals}</Text>
+                        <Text style={cardStyle.cardText}>Assists: {this.state.currentPlayer.assists}</Text>
+                        <Text style={cardStyle.cardText}>Yellow Cards: {this.state.currentPlayer.yellowCards}</Text>
+                        <Text style={cardStyle.cardText}>Red Cards: {this.state.currentPlayer.redCards}</Text>
+                        <Text style={cardStyle.cardText}>Minutes Played: {this.state.currentPlayer.minsPlayed}</Text>
+                        <Text style={cardStyle.cardText}>Starts: {this.state.currentPlayer.starts}</Text>
+                    </View>
+                    <TouchableOpacity style={[Styles.buttonTemplate, cardStyle.wonButton]} onPress={this.wonRound}>
+                        <Text style={Styles.buttonText}>I Won</Text>
+                    </TouchableOpacity>
                 </View>
             )
         }
@@ -196,8 +243,20 @@ let cardStyle = StyleSheet.create({
         width: '80%',
         height: '90%',
         backgroundColor: 'yellow',
-        justifyContent: 'center',
-        alignItems: 'center'
+        flexDirection: 'column'
+    },
+    metaInfo: {
+        backgroundColor: 'orange'
+    },
+    keyInfo: {
+        backgroundColor: 'green'
+    },
+    cardText: {
+        color: 'white',
+        fontSize: 10
+    },
+    wonButton: {
+        backgroundColor: colourPalette.purple,
     }
 })
 

@@ -7,6 +7,8 @@ games = {}
 users = {}
 decks = {}
 
+roundEnd = {}
+
 const PORT = 3000
 
 const MAX_PLAYERS = 3
@@ -108,6 +110,19 @@ io.on('connection', (socket) => {
         if (games[info.gameID] !== undefined)
             games[info.gameID] -= 1
         io.sockets.in(info.gameID).emit('playersChanged', games[info.gameID])
+    })
+
+    socket.on('wonRound', (info) => {
+
+        socket.to(users[info.id]).emit("requestCards", info.winner)
+
+        roundEnd[users[info.id]] = socket.id
+
+    })
+
+    socket.on("sendCardToWinner", (info) => {
+        io.sockets.in(info.gameID).emit("addCard", {cardID: info.cardID,
+                                    winner: info.winner})
     })
 
     socket.on('disconnect', () => {
