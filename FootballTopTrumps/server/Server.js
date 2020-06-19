@@ -4,6 +4,7 @@ var io = require('socket.io')(http);
 
 
 games = {}
+gamesPlaying = []
 users = {}
 decks = {}
 
@@ -36,10 +37,11 @@ function shuffle(array) {
 
 io.on('connection', (socket) => {
 
-    console.log("A client connected")
-
-    socket.emit("alright")
+    socket.on("checkServer", () => {
+        socket.emit("connectionSuccessful")
+    })
     
+
     socket.on('createGame', (uniqueID) => {
         // Set the property uuid to 1.
         // As there is 1 player (the host in the room).
@@ -61,7 +63,10 @@ io.on('connection', (socket) => {
         let cards = shuffle(deck.players)
         decks[info.gameID] = {deckSize: cards.length, cards: cards}
 
-        io.sockets.in(gameID).emit("startGame")
+        // Put the game in the playing object
+        gamesPlaying.push(info.gameID)
+
+        io.sockets.in(gameID).emit("startGame", cards.length)
     })
 
     socket.on("requestCards", (info) => {
@@ -82,6 +87,8 @@ io.on('connection', (socket) => {
             socket.emit('noServer')
         } else if (games[serverID] === MAX_PLAYERS) {
             socket.emit('serverFull')
+        } else if (gamesPlaying.includes(serverID)) {
+            socket.emit('gameAlreadyStarted')
         } else {
             socket.emit("okToJoin")
         }
@@ -103,13 +110,28 @@ io.on('connection', (socket) => {
         delete games[info.gameID]
         delete users[info.userID]
         io.sockets.in(info.gameID).emit('forceDisconnect')
+
+        let gameIndex = gamesPlaying.indexOf(info.gameID)
+
+        if (gameIndex > -1) 
+            gamesPlaying.splice(gameIndex, 1)
     })
 
     socket.on('clientDisconnecting', (info) => {
         delete users[info.userID]
         if (games[info.gameID] !== undefined)
             games[info.gameID] -= 1
-        io.sockets.in(info.gameID).emit('playersChanged', games[info.gameID])
+        
+            io.sockets.in(info.gameID).emit('playersChanged', games[info.gameID])
+
+        if (!info.isEliminated) {
+            io.sockets.in(info.gameID).emit("showLobby")
+             // Remove the game from the playing games.
+            let gameIndex = gamesPlaying.indexOf(info.gameID)
+
+            if (gameIndex > -1) 
+                gamesPlaying.splice(gameIndex, 1)
+        }
     })
 
     socket.on('wonRound', (info) => {

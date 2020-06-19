@@ -7,7 +7,10 @@ import axios from 'axios'
 import { render } from 'react-dom'
 import 'react-native-gesture-handler'
 import Collapsible from 'react-collapsible'
-import { v4 as uuidv4} from 'uuid';
+import socketIOClient from 'socket.io-client'
+import {ENDPOINT, SOCKET_ENDPOINT} from '../server-info/ServerInfo'
+
+const MIN_CARDS = 30
 
 class Deck extends React.Component {
 
@@ -54,7 +57,7 @@ class NewDeck extends React.Component {
             starts: [startStarts[0], startStarts[1]],
             minsPlayed: [startPlayed[0], startPlayed[1]],
             selectedCards: [],
-            deckName: ""     
+            deckName: "",     
         }
     }
 
@@ -138,19 +141,39 @@ class NewDeck extends React.Component {
         // and the name of the deck.
         
 
-        if (this.state.deckName !== "" && this.state.selectedCards.length !== 0){
+        if (this.state.deckName !== "" && this.state.selectedCards.length !== 0 && this.state.selectedCards.length > MIN_CARDS){
             let deck = {
                 deckName: this.state.deckName,
                 players: this.state.selectedCards
             }
 
             axios.post(ENDPOINT + "decks/", deck)
-            this.props.navigation.navigate("Deck")
-        }
+
+            if (this.state.selectedCards.length > MIN_CARDS && this.state.deckName !== ""){
+                this.setState({canSubmit: true})
+                this.props.navigation.navigate("Deck")
+            } 
+        } 
     }
 
     setDeckName = (event) => {
         this.setState({deckName: event.nativeEvent.text})
+    }
+
+    deckNameError = () => {
+        if (this.state.deckName === "") {
+            return (
+                <Text>You must name your deck!</Text>
+            )
+        }
+    }
+
+    cardsLengthError = () => {
+        if (this.state.selectedCards.length < MIN_CARDS) {
+            return (
+                <Text>You must select at least {MIN_CARDS} cards!</Text>
+            )
+        }
     }
 
 
@@ -220,6 +243,8 @@ class NewDeck extends React.Component {
                         {<Text style={Styles.buttonText}>Search</Text>}
                     </TouchableOpacity>
                     {this.selectedCardsMsg()}
+                    {this.deckNameError()}
+                    {this.cardsLengthError()}
                     <View style={deckStyle.createBanner}>
                         <TouchableOpacity style={[Styles.buttonTemplate, deckStyle.submitDeck]} onPress={this.submitDeck}>
                             <Text style={Styles.buttonText}>Create Deck</Text>
@@ -233,8 +258,6 @@ class NewDeck extends React.Component {
     }
 
 }
-
-const ENDPOINT = "http://81.154.167.160:8080/api/v1/"
 
 class Results extends React.Component {
 
@@ -358,6 +381,8 @@ class ViewDecks extends React.Component {
             query: this.props.route.params.query,
             isCreatingGame: this.props.route.params.isCreatingGame
         }
+
+        
 
         this.getDecks()
 
@@ -494,12 +519,16 @@ class ViewDeckScreen extends React.Component {
         }
     }
 
+    createGame = () => {
+        this.props.navigation.navigate("GameLobby", 
+                                {createGame: true, deck: this.state.deck})
+    }
+
     drawButton = () => {
         if (this.state.isCreatingGame) {
             return (
                 <TouchableOpacity style={[Styles.buttonTemplate, selectDeckStyle.selectDeck]}
-                                    onPress={() => this.props.navigation.navigate("GameLobby", 
-                                    {createGame: true, deck: this.state.deck})}>
+                                    onPress={this.createGame}>
                     <Text style={Styles.buttonText}>Select Deck</Text>
                 </TouchableOpacity>
             )

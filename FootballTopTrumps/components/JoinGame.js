@@ -2,8 +2,7 @@ import React from "react"
 import {colourPalette, Styles} from '../Stylesheet'
 import {Text, TextInput, View} from 'react-native'
 import socketIOClient from 'socket.io-client'
-
-const ENDPOINT = "http://81.154.167.160:3000"
+import {SOCKET_ENDPOINT as ENDPOINT} from '../server-info/ServerInfo'
 
 
 export default class JoinGame extends React.Component {
@@ -15,6 +14,7 @@ export default class JoinGame extends React.Component {
         this.state = {
             serverFull : false,
             noServer : false,
+            gameStarted: false,
             serverID: ""
         }
     }
@@ -27,16 +27,22 @@ export default class JoinGame extends React.Component {
 
         this.socket.emit('checkJoin', obj.nativeEvent.text)
 
+        this.setState({serverFull: false})
+        this.setState({noServer: false})
+        this.setState({gameStarted: false})
+
         this.socket.on('noServer', () => {
-            this.setState({serverFull: false})
             this.setState({noServer: true})
         })
 
         this.socket.on('serverFull', () => {
             console.log("The Server is Full")
             this.setState({serverFull: true})
-            this.setState({noServer: false})
         })        
+
+        this.socket.on('gameAlreadyStarted', () => {
+            this.setState({gameStarted: true})
+        })
         
         this.socket.on('okToJoin', () => {
             this.props.navigation.navigate("GameLobby", {gameID: this.state.serverID,
@@ -58,6 +64,14 @@ export default class JoinGame extends React.Component {
         } else if (this.state.noServer) {
             return (
                 <Text>The Server specified does not exist</Text>
+            )
+        } else if (this.state.gameStarted) {
+            return (
+                <Text>The game has already started!</Text>
+            )
+        } else {
+            return (
+                <Text></Text>
             )
         }
     }

@@ -1,0 +1,5 @@
+const ENDPOINT = "http://81.154.167.160:8080/api/v1/"
+const SOCKET_ENDPOINT = "http://81.154.167.160:3000"
+
+
+export {ENDPOINT, SOCKET_ENDPOINT}

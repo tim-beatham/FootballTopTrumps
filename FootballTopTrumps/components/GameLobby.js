@@ -4,10 +4,7 @@ import {Text, TouchableOpacity, View, StyleSheet, Image} from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
 import axios from 'axios'
 import socketIOClient from 'socket.io-client'
-
-const ENDPOINT = "http://81.154.167.160:3000"
-
-const REST_ENDPOINT = "http://81.154.167.160:8080/api/v1/"
+import {ENDPOINT as REST_ENDPOINT, SOCKET_ENDPOINT as ENDPOINT} from '../server-info/ServerInfo'
 
 
 
@@ -20,9 +17,13 @@ class GameLobby extends React.Component {
             createGame: this.props.route.params.createGame,
             gameID: "",
             numPlayers: 0,
-            started: false,
             hideLobby: false,
-            cards: []
+            cards: [],
+            deckSize: -1,
+            eliminated: false,
+            wonGame: false,
+            serverDown: false,
+            connectionSuccess: false
         }                        
 
         if (!this.state.createGame) {
@@ -46,7 +47,7 @@ class GameLobby extends React.Component {
     }
 
     drawStartButton = () => {
-        if (this.state.createGame && !this.state.started) {
+        if (this.state.createGame && !this.state.hideLobby) {
             return (
                 <TouchableOpacity style={[Styles.buttonTemplate, gameLobbyStyle.playButton]} onPress={this.startGame}>
                     <Text style={Styles.buttonText}>Start</Text>
@@ -56,8 +57,10 @@ class GameLobby extends React.Component {
     }
 
     startGame = () => {
-        this.socket.emit("gameStarted", {deck: this.deck, gameID: this.gameID})
-        this.setState({started: true})
+        if (this.state.numPlayers > 1){
+            this.socket.emit("gameStarted", {deck: this.deck, gameID: this.gameID})
+            this.setState({deckSize: this.deck.players.length})
+        }
     }
 
     componentWillUnmount = () => {
@@ -67,12 +70,21 @@ class GameLobby extends React.Component {
             
         } else {
             this.socket.emit("clientDisconnecting", {gameID: this.gameID, 
-                userID: this.uniqueID})
+                userID: this.uniqueID, isEliminated: this.state.eliminated})
+            console.log("Eliminated", this.state.eliminated)
+
         }
         this.socket.disconnect()
     }
 
     setUpServer = () => {
+
+        this.socket.emit("checkServer")
+
+        this.socket.on("connectionSuccessful", () => {
+            this.setState({connectionSuccess: true})
+        })
+
         if (this.state.createGame){
 
             this.socket.emit('createGame', this.uniqueID)
@@ -87,23 +99,42 @@ class GameLobby extends React.Component {
             
         }
 
+        this.socket.on("showLobby", () => {
+            this.setState({eliminated: false})
+            this.setState({wonGame: false})
+            this.setState({cards: []})
+            this.setState({hideLobby: false})
+            this.setState({deckSize: -1})
+        })
+
         this.socket.on("playersChanged", (numPlayers) => {
             this.setState({numPlayers: numPlayers})
+
+
         })
 
         this.socket.on('forceDisconnect', () => {
-            this.props.navigation.navigate('JoinGame')
+            this.props.navigation.navigate('JoinGame')       
         })
 
-        this.socket.on("startGame", () => {
+        this.socket.on("startGame", (deckSize) => {
             this.socket.emit("requestCards", {gameID: this.gameID})
             this.setState({hideLobby: true})
+
+            console.log("Testing receive", deckSize)
+
+            this.setState({deckSize: deckSize})
+            
         })
 
         this.socket.on("sendCards", (playerCards) => {
             
             this.setState({cards: playerCards})
             this.setState({hideLobby: true})
+        })
+
+        this.socket.on("disconnect", () => {
+            this.setState({serverDown: true})
         })
     }
 
@@ -115,18 +146,62 @@ class GameLobby extends React.Component {
         this.setState({cards: [...this.state.cards, cardID]})
     }
 
+    setEliminated = () => {
+        if (this.state.cards.length === 0)
+            this.setState({eliminated: true})
+    }
+
+    setWonGame = () => {
+        this.setState({wonGame: true})
+    }
+
+    hasWonGame = () => {
+        if (this.state.cards.length === this.state.deckSize)
+            return true
+        return false
+    }
+
     renderWidgets = () => {
-        if (this.state.cards.length > 0) {
+        console.log("Cards", this.state.cards.length)
+        console.log("DeckSize", this.state.deckSize)
+
+        if (!this.state.connectionSuccess) {
+            return (
+                <View style={Styles.container}>
+                    <Text>Attempting to connect to the server.</Text>
+                    <Text>If this message does not disappear in 10 seconds</Text>
+                    <Text>please try again.</Text>
+                </View>
+            )
+        }else if (this.state.serverDown) {
+            return (
+                <Text>I am afraid the server has gone down.</Text>
+            )        
+        }else if (this.state.wonGame) {
+            return (
+                <Text>You have won the game!</Text>
+            )
+        } else if (this.state.cards.length > 0) {
             return (
                 <Card cards={this.state.cards} socket={this.socket} 
                             gameID={this.gameID} userID={this.uniqueID}
-                            popCard={this.popCard} addCard={this.addCard} />
+                            popCard={this.popCard} addCard={this.addCard} 
+                            setEliminated={this.setEliminated} 
+                            setWonGame={this.setWonGame} 
+                            hasWonGame={this.hasWonGame} />
+            )
+        } else if (this.state.eliminated){        
+            return (
+                <View style={Styles.container}>
+                    <Text>I am afraid you have been eliminated.</Text>
+                </View>
             )
         } else {
             return (
                 <View style={Styles.container}>
                     <Text>{this.gameID}</Text>       
-                    <Text>{this.state.numPlayers} players connected!</Text>    
+                    <Text>{this.state.numPlayers} player(s) connected!</Text>
+                    <Text>There must be at least two players to start the game.</Text>    
                     <Text>Welcome to the game lobby</Text>
                     {this.drawStartButton()}
                 </View>
@@ -169,17 +244,27 @@ class Card extends React.Component {
 
     events = () => {
         this.props.socket.on("requestCards", (winner) => {
-            this.props.socket.emit("sendCardToWinner", 
-                        {cardID:this.state.currentPlayer.id, gameID: this.props.gameID,
-                            winner: winner})
-            this.props.popCard()
-            this.getNextCard()
+            if (this.props.cards.length !== 0) {
+                this.props.socket.emit("sendCardToWinner", 
+                            {cardID:this.state.currentPlayer.id, gameID: this.props.gameID,
+                                winner: winner})
+                this.props.popCard()
+                this.getNextCard()
+
+                this.props.setEliminated()
+            } 
         })
 
         this.props.socket.on("addCard", (info) => {
             console.log("Checking singular", info.cardID)
-            if (this.props.userID === info.winner)
+            if (this.props.userID === info.winner) {
                 this.props.addCard(info.cardID)
+            }
+            
+            if (this.props.hasWonGame()) {
+                this.props.setWonGame()
+            }
+
         })
 
     }
@@ -241,19 +326,19 @@ class Card extends React.Component {
 let cardStyle = StyleSheet.create({
     cardContainer: {
         width: '80%',
-        height: '90%',
-        backgroundColor: 'yellow',
-        flexDirection: 'column'
+        backgroundColor: 'white',
+        flexDirection: 'column',
+        flex: 1
     },
     metaInfo: {
-        backgroundColor: 'orange'
+        backgroundColor: '#1C5F88'
     },
     keyInfo: {
-        backgroundColor: 'green'
+        backgroundColor: colourPalette.red
     },
     cardText: {
         color: 'white',
-        fontSize: 10
+        fontSize: 20
     },
     wonButton: {
         backgroundColor: colourPalette.purple,
